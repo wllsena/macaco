@@ -41,7 +41,48 @@ py::list const vec(const py::list lin) {
   return l;
 }
 
+struct World {
+  void set(string msg) { this->msg = msg; }
+  string greet() { return msg; }
+  string msg;
+};
+
+struct Var
+{
+  Var(std::string name) : name(name), value() {}
+  std::string const name;
+  float value;
+};
+
+class FilePos { /*...*/ };
+
+FilePos     operator+(FilePos, int);
+FilePos     operator+(int, FilePos);
+int         operator-(FilePos, FilePos);
+FilePos     operator-(FilePos, int);
+FilePos&    operator+=(FilePos&, int);
+FilePos&    operator-=(FilePos&, int);
+bool        operator<(FilePos, FilePos);
+
+
 BOOST_PYTHON_MODULE(test) {
   py::def("greet", &greet);
   py::def("vec", &vec);
+
+  py::class_<World>("World")
+    .def("greet", &World::greet)
+    .def("set", &World::set);
+
+  py::class_<Var>("Var", py::init<std::string>())
+    .def_readonly("name", &Var::name)
+    .def_readwrite("value", &Var::value);
+
+  py::class_<FilePos>("FilePos")
+    .def(py::self + int())          // __add__
+    .def(int() + py::self)          // __radd__
+    .def(py::self - py::self)           // __sub__
+    .def(py::self - int())          // __sub__
+    .def(py::self += int())         // __iadd__
+    .def(py::self -= py::other<int>())
+    .def(py::self < py::self);          // __lt__
 }
