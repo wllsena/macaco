@@ -1,0 +1,4 @@
+g++ -o testmain -std=c++17 testmain.cpp
+
+g++ -fpic -c -o test.o test.cpp -std=c++17
+g++ -o test.so -shared test.o -lboost_python37 -lpython3.7 -std=c++17
