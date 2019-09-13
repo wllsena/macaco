@@ -1,26 +1,27 @@
 #include <vector>
 #include <iostream>
 #include <variant>
+#include <stdlib.h>
 
 using namespace std;
-using object = variant<int, float, string>;
 
 //---
 
+template <class T>
 struct cell {
-  object value;
-  int    index;
-  cell (object v, int i): value(v), index(i) {}
+  T   value;
+  int index;
+  cell (T v, int i): value(v), index(i) {}
 };
 
 //---
 
+template <class T>
 struct serie {
-  vector<cell>   cells;
-  vector<object> data;
-  int            size = 0;
+  vector<cell<T> > cells;
+  vector<T>        data;
 
-  void add (object &key) {
+  void add (T &key) {
     auto lower = cells.begin();
     auto upper = cells.end();
     auto mid   = lower + (upper - lower) / 2;
@@ -33,55 +34,53 @@ struct serie {
       mid = lower + (upper - lower) / 2;
     }
 
-    cells.insert(mid + (size == 0 or key < mid->value ? 0 : 1), cell(key, size));
+    cells.insert(mid + (data.size() == 0 or key < mid->value ? 0 : 1), cell(key, data.size()));
     data.push_back(key);
-    size++;
   }
-
-  void adds (vector<object> &vec) {
-    for (auto i = vec.begin(); i != vec.end(); i++)
-      add(*i);
-  }
-
-  template <class T>
-  void print () {
-    for (auto i = cells.begin(); i != cells.end(); i++) {
-      cout << get<T>(i->value) << "_" << i->index << " ";
-    }
-    cout << endl;
-  }
-
-  serie (vector<object> &vec) {
-    adds(vec);
-  };
 };
 
 //---
 
-class dataframe {
+using serie_T = variant<serie<int> *, serie<float> *, serie<string>*>;
+
+class BF {
 protected:
 
-  vector<serie*> pSeries;
-  int            size = 0;
+  vector<serie_T> pSeries;
 
 public:
 
-  void add_serie (vector<object> &vec) {
-    pSeries.push_back(new serie(vec));
-    size++;
+
+  template <class T>
+  void add_cell (int index, T value) {
+    get<serie<T> *>(pSeries[index])->add(value);
   }
 
   template <class T>
-  vector<T> to_vec (const int &index) {
-    vector<T> vec;
-    for (auto i = pSeries[index]->data.begin(); i != pSeries[index]->data.end(); i++) {
-      vec.push_back(get<T>(*i));
+  void add_column (vector<T> vec) {
+    pSeries.push_back(new serie<T>);
+
+    for (auto i = vec.begin(); i != vec.end(); i++)
+      add_cell<T>(pSeries.size() - 1, *i);
+  }
+
+  void add_row (vector<string> types, vector<char *> vec) {
+    for (int i = 0; i != vec.size(); i++) {
+      if (types[i] == "string")
+        add_cell<string>(i, vec[i]);
+      else if (types[i] == "int")
+        add_cell<int>(i, atoi(vec[i]));
+      else
+        add_cell<float>(i, atof(vec[i]));
     }
-    return vec;
   }
 
   template <class T>
-  void print (const int &index) {
-    pSeries[index]->print<T>();
+  vector<T> to_vec (int index) {
+    vector<T> vec;
+    for (auto i = get<serie<T> *>(pSeries[index])->data.begin();
+         i != get<serie<T> *>(pSeries[index])->data.end(); i++)
+      vec.push_back(*i);
+    return vec;
   }
 };
