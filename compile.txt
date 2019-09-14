@@ -1,4 +1,4 @@
-g++ -o testmain -std=c++17 testmain.cpp
+g++ -o structure -std=c++17 structure.cpp
 
 g++ -fpic -c -o integration.o integration.cpp -std=c++17
 g++ -o integration.so -shared integration.o -lboost_python37 -lpython3.7 -std=c++17
