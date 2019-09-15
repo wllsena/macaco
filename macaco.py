@@ -1,6 +1,39 @@
 class BananaFrame:
     import checks_and_error_handling as __ceh
     import integration as __it
+    import matplotlib.pyplot as __plt
+    import tabulate as __tb
+    import copy as __cp
+
+    class __serie:
+        def __init__(self, self_bf, index):
+            self.__index   = index
+            self.__self_bf = self_bf
+
+        def __eq__(self, key):
+            return self.__self_bf.query(self.__index, key)
+
+        @property
+        def display(self):
+            print(__tb.tabulate([[self.__index + "(s):"] + self.__self_bf.take_column(self.__index)], tablefmt="fancy_grid"))
+            print("macaco.BananaFrame.__serie")
+            return ""
+
+        @property
+        def size(self):
+            return self.__self_bf.size[1]
+
+        def __len__ (self):
+            return self.size
+
+        def __str__ (self):
+            return self.display
+
+        def __repl__ (self):
+            return self.display
+
+        def _repr_html_(self):
+            return self.display
 
     __bf      = None
     __axis0   = 0
@@ -8,11 +41,8 @@ class BananaFrame:
     __columns = {}
     __types   = []
 
-    def __general_return (self, index):
-        return lambda : self.__bf.take_column(index)
-
     def __init__ (self, dic):
-        items      = list(dic.items())
+        items        = list(dic.items())
         self.__axis0 = len(items[0][1])
         self.__axis1 = len(items)
 
@@ -21,13 +51,33 @@ class BananaFrame:
         self.__types   = self.__ceh.check_types(items)
         self.__columns = self.__ceh.check_columns(items)
 
-        for name, index in self.__columns.items():
-            setattr(self, name, self.__general_return(index))
+        for name in self.__columns.keys():
+            setattr(self, name, self.__serie(self, name))
 
         self.__bf = self.__it.BananaFrame(self.__axis0, self.__axis1, self.__types)
         for i in range(self.__axis1):
             self.__bf.fill_column(i, items[i][1])
 
+    def add_columns(self, dic):
+        items = list(dic.items())
+
+        self.__ceh.check_sizes(self.__axis0, items)
+        types   = self.__ceh.check_types(items)
+        columns = self.__ceh.check_columns(items, list(self.__columns.keys()))
+
+        self.__axis0   += len(items[0][1])
+        self.__axis1   += len(items)
+        self.__types   += types
+        self.__columns.update(columns)
+
+        for name in columns.keys():
+            setattr(self, name, self.__serie(self, name))
+
+        for i in range(len(types)):
+            self.__bf.add_column(types[i], items[i][1])
+
+    def take_column (self, name):
+        return self.__bf.take_column(self.__columns[name])
 
     def query (self, column, key):
         self.__ceh.check_index(self.__axis1, self.__columns[column], key, self.__types)
@@ -37,40 +87,90 @@ class BananaFrame:
         self.__ceh.check_index(self.__axis0, index)
         return self.__bf.take_row(index)
 
-    def slices (self, keys):
+    def column (self, index):
+        self.__ceh.check_in(index, self.__columns.keys())
+        return getattr(self, index)
+
+    def copy (self):
+        new_one = self.__class__.__new__(self.__class__)
+        for k, v in self.__dict__.items():
+            setattr(new_one, k, self.__cp.copy(v))
+        return new_one
+
+    def cut (self, keys):
         self.__ceh.check_types(keys, False)
-        self.__bf.slice(keys)
+        self.__ceh.check_ins(keys, self.indexes)
         self.__axis0 = len(keys)
+        self.__bf.slice(keys)
 
-    def display (self):
-        from tabulate import tabulate
-        table = [None]*self.__axis0
-        for y in range(self.__axis0):
-            table[y] = [y] + self.row(y)
-        print(tabulate(table, headers=[""] + self.columns, tablefmt="fancy_grid"))
-
-    def __ne__(self, key):
-        pass
+    def slices (self, keys):
+        new_bf = self.copy()
+        new_bf.cut(keys)
+        return new_bf
 
     def __getitem__(self, key):
         if isinstance(key, list):
             return self.slices(key)
         elif isinstance(key, str):
-            return getattr(self, key)()
+            return self.column(key)
         elif isinstance(key, int):
             return self.row(key)
         else:
             raise self.__ceh.UnexpectedTypeError(key)
 
     @property
-    def columns (self):
+    def column_names (self):
         return list(self.__columns.keys())
 
     @property
     def size (self):
-        return (self.__axis0, self.__axis1)
+        return [self.__axis0, self.__axis1]
 
     @property
     def types (self):
         return [self.__ceh.tint_to_type(t) for t in self.__types]
 
+    @property
+    def display (self):
+        table = [None]*self.__axis0
+        for y in range(self.__axis0):
+            table[y] = [y] + self.row(y)
+        print(self.__tb.tabulate(table, headers=[""] + self.column_names, tablefmt="fancy_grid"))
+        print("macaco.BananaFrame")
+        return ""
+
+    @property
+    def indexes(self):
+        return [i for i in range(self.__axis0)]
+
+    def __len__ (self):
+        return self.size
+
+    def __str__ (self):
+        return self.display
+
+    def __repl__ (self):
+        return self.display
+
+    def _repr_html_(self):
+        return self.display
+
+    def plot(self, xlabel, ylabel = False, sort = False, marker='o'):
+        if ylabel:
+            indexY = self.take_column(ylabel)
+        else:
+            ylabel = "Index"
+            indexY = self.indexes
+        indexX = self.take_column(xlabel)
+
+        if sort:
+            indexX, indexY = zip(*sorted(zip(indexX, indexY), key = lambda x : x[sort]))
+
+        self.__plt.plot(indexX, indexY, marker)
+        self.__plt.xlabel(xlabel)
+        self.__plt.ylabel(ylabel)
+        self.__plt.title(xlabel + " X " + ylabel)
+        self.__plt.show()
+
+    def r(self):
+        return self.__bf

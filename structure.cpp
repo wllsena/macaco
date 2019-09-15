@@ -14,7 +14,13 @@ struct serie {
   vector<int> indexes;
   int         depth = 0;
 
-  void add (T &key) {
+  const void import(const vector<T> cel, const vector<int> ind, const int dep) {
+    cells   = cel;
+    indexes = ind;
+    depth   = dep;
+  }
+
+  const void add (const T &key) {
     auto lower = cells.begin();
     auto upper = cells.end();
     auto mid   = lower + (upper - lower) / 2;
@@ -34,26 +40,22 @@ struct serie {
     depth++;
   }
 
-  void organize_indexes () {
+  const void cut_pieces(const vector<int> &indexs) {
     vector<int> vec(depth);
-    for (int i = 0; i != depth; i++)
-      vec[indexes[i]] = i;
-    indexes = vec;
-  }
-
-  void cut_pieces(vector<int> indexs) {
     vector<T>   pc_cells (depth);
     vector<int> pc_indexes (depth, -1);
 
-    organize_indexes();
+    for (int i = 0; i != depth; i++)
+      vec[indexes[i]] = i;
+    indexes = vec;
 
     for (int i = 0; i < indexs.size(); i++) {
       pc_cells[indexes[indexs[i]]] = cells[indexes[indexs[i]]];
       pc_indexes[indexes[indexs[i]]] = i;
     }
 
-    cells   = vector<T> ();
-    indexes = vector<int> ();
+    cells.clear();
+    indexes.clear();
 
     for (int i = 0; i < depth; i++) {
       if (pc_indexes[i] != -1) {
@@ -65,15 +67,14 @@ struct serie {
     depth = indexes.size();
   }
 
-  vector<int> search (T &key) {
+  const vector<int> search (const T &key) {
+    vector<int> vec;
     auto lower = cells.begin();
     auto upper = cells.end();
     auto mid   = lower + (upper - lower) / 2;
 
     while (mid != lower or key == *lower) {
       if (key == *mid) {
-        vector<int> vec;
-
         if (mid != cells.begin())
           for (lower = mid - 1; lower + 1 > cells.begin() and *lower == key; lower--)
             vec.push_back(*(indexes.begin() + (lower - cells.begin())));
@@ -95,7 +96,7 @@ struct serie {
       mid = lower + (upper - lower) / 2;
     }
 
-    return vector<int> ();
+    return vec;
   }
 };
 
@@ -104,18 +105,13 @@ struct serie {
 using object = variant<int, float, string>;
 using pS_object = variant<serie<int> *, serie<float> *, serie<string> *>;
 
-class BF {
-protected:
-
+struct BF {
+  int                      axis0, axis1;
+  vector<int>              types;
   vector<vector<object> *> pData;
   vector<pS_object>        pSeries;
 
-public:
-
-  int         axis0, axis1;
-  vector<int> types;
-
-  BF(int ax0, int ax1, vector<int> tps) : axis0(ax0), axis1(ax1), types(tps) {
+  BF (const int &ax0, const int &ax1, const vector<int> &tps) : axis0(ax0), axis1(ax1), types(tps) {
     for (int i = 0; i != axis0; i++)
       pData.push_back(new vector<object>);
 
@@ -133,61 +129,136 @@ public:
     }
   }
 
+  const void import (const vector<vector<object> *> &new_pData, const vector<pS_object> &new_pSeries) {
+    for (int i = 0; i != axis0; i++)
+      *pData[i] = *new_pData[i];
+
+    for (int i = 0; i != axis1; i++)
+      if (types[i] == 0) {
+        get<serie<int> *>(pSeries[i])->import(get<serie<int> *> (new_pSeries[i])->cells,
+                                              get<serie<int> *> (new_pSeries[i])->indexes, axis0);
+
+      }else if (types[i] == 1) {
+        get<serie<float> *>(pSeries[i])->import(get<serie<float> *> (new_pSeries[i])->cells,
+                                                get<serie<float> *> (new_pSeries[i])->indexes, axis0);
+
+      }else if (types[i] == 2) {
+        get<serie<string> *>(pSeries[i])->import(get<serie<string> *> (new_pSeries[i])->cells,
+                                                 get<serie<string> *> (new_pSeries[i])->indexes, axis0);
+      }
+  }
+
   template <class T>
-  void add_cell (int index, T value) {
+  const void add_cell (const int &index, const T &value) {
     pData[get<serie<T> *>(pSeries[index])->depth]->push_back(value);
     get<serie<T> *>(pSeries[index])->add(value);
   }
 
   template <class T>
-  void fill_column (int index, vector<T> vec) {
+  const void fill_column (const int &index, const vector<T> &vec) {
     for (auto i = vec.begin(); i != vec.end(); i++)
       add_cell<T>(index, *i);
   }
 
   template <class T>
-  vector<int> query (int index, T key) {
+  const void add_column (const int &type, const vector<T> &vec) {
+    pSeries.push_back(new serie<T>);
+    types.push_back(type);
+    fill_column(axis1, vec);
+    axis1++;
+  }
+
+  template <class T>
+  const vector<int> query (const int &index, const T &key) {
     return get<serie<T> *>(pSeries[index])->search(key);
   }
 
   template <class T>
-  vector<T> take_serie (int index) {
+  const vector<T> take_serie (const int &index) {
     return get<serie<T> *>(pSeries[index])->cells;
   }
 
   template <class T>
-  vector<int> take_serie_indexes (int index) {
+  const vector<int> take_serie_indexes (const int &index) {
     return get<serie<T> *>(pSeries[index])->indexes;
   }
 
   template <class T>
-  vector<T> take_column (int index) {
+  const vector<T> take_column (const int &index) {
     vector<T> vec;
     for (auto d = pData.begin(); d != pData.end(); d++)
       vec.push_back(get<T>((**d)[index]));
     return vec;
   }
 
-  vector<object> take_row (int index) {
+  const vector<object> take_row (const int &index) {
     return *pData[index];
   }
 
-  void slice (vector<int> indexs) {
-    vector<vector<object> *> new_pData;
-    for (auto ii = indexs.begin(); ii != indexs.end(); ii++)
-      new_pData.push_back(pData[*ii]);
+  const void slice (const vector<int> &indexs) {
+    vector<vector<object> *> new_pData(indexs.size());
+
+    for (int i = 0; i != indexs.size(); i++)
+      new_pData[i] = pData[indexs[i]];
+
+    pData.clear();
     pData = new_pData;
 
-    vector<pS_object> new_pSeries = pSeries;
     for (int i = 0; i < axis1; i++) {
       if (types[i] == 0)
-        get<serie<int> *>(new_pSeries[i])->cut_pieces(indexs);
+        get<serie<int> *>(pSeries[i])->cut_pieces(indexs);
       else if (types[i] == 1)
-        get<serie<float> *>(new_pSeries[i])->cut_pieces(indexs);
+        get<serie<float> *>(pSeries[i])->cut_pieces(indexs);
       else if (types[i] == 2)
-        get<serie<string> *>(new_pSeries[i])->cut_pieces(indexs);
+        get<serie<string> *>(pSeries[i])->cut_pieces(indexs);
     }
 
     axis0 = indexs.size();
   }
 };
+/*
+  int main () {
+  vector<int> fuck;
+  fuck.push_back(0);
+  fuck.push_back(0);
+
+  BF bf;
+  bf.format(2, 2, fuck);
+  bf.initialize();
+
+  bf.fill_column(0, fuck);
+  bf.fill_column(1, fuck);
+
+  vector<int> fuck2;
+  fuck.push_back(0);
+  fuck.push_back(1);
+
+  bf.slice(fuck2);
+  }
+
+*/
+/*
+  const void copy (vector<vector<object> *> &new_pData, vector<pS_object> &new_pSeries) {
+  vector<object> * new_data = new vector<object>;
+  for (int i = 0; i != axis0; i++) {
+  *new_data = *pData[i];
+  pData.push_back(new_data);
+  }
+
+  for (int i = 0; i != axis1; i++) {
+  if (types[i] == 0) {
+  pS_object new_serie = new serie<int>;
+  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
+  new_pSeries.push_back(new_serie);
+  }else if (types[i] == 1) {
+  pS_object new_serie = new serie<int>;
+  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
+  new_pSeries.push_back(new_serie);
+  }else if (types[i] == 2) {
+  pS_object new_serie = new serie<int>;
+  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
+  new_pSeries.push_back(new_serie);
+  }
+  }
+  }
+*/

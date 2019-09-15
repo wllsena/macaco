@@ -1,7 +1,7 @@
 class UnexpectedTypeError(Exception):
     def __init__(self, value):
         Exception.__init__(self, "Expected types: <class 'list'>, <class 'string'> and <class 'int'>. Given type {} !"
-                           .format(type(data)))
+                           .format(type(value)))
 
 class NotInError(Exception):
     def __init__(self, value, context):
@@ -10,15 +10,15 @@ class NotInError(Exception):
 class WrongTypeError(Exception):
     def __init__(self, value, one_type = False):
         str_types = one_type if one_type else "<class 'int'>, <class 'float'> and <class 'string'>"
-        Exception.__init__(self, "Accepted types: {}. Type of {} is {} !".format(str_types, value, type(data)))
+        Exception.__init__(self, "Accepted types: {}. Type of {} is {} !".format(str_types, value, type(value)))
 
 class AxisSizeError(Exception):
     def __init__(self, index, axis):
         Exception.__init__(self, "Axis size: {}, given index {} !".format(axis, index))
 
 class WrongTypeContextError(Exception):
-    def __init__(self, first_type, data):
-        Exception.__init__(self, "Context Type: {}. Type of {} is {} !".format(first_type, data, type(data)))
+    def __init__(self, first_type, value):
+        Exception.__init__(self, "Context Type: {}. Type of {} is {} !".format(first_type, value, type(value)))
 
 class WrongDataSizesError(Exception):
     def __init__(self):
@@ -62,10 +62,10 @@ def check_empy(axis0, axis1):
     if axis0 == 0 or axis1 == 0:
         raise EmpyDicError
 
-def check_columns(items):
+def check_columns(items, prev_keys = []):
     columns = {}
     for i, (names, _) in enumerate(items):
-        if names not in columns:
+        if names not in list(columns.keys()) + prev_keys:
             columns[names] = i
         else:
             raise ColumnNameError(name)
@@ -106,3 +106,9 @@ def check_index(axis, index, key = False, types=False):
 def check_in(value, values):
     if value not in values:
         raise NotInError(value, values)
+
+def check_ins(values, context):
+    if min(values) not in context:
+        raise NotInError(min(values), context)
+    elif max(values) not in context:
+        raise NotInError(max(values), context)
