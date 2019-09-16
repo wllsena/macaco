@@ -1,6 +1,6 @@
 class UnexpectedTypeError(Exception):
     def __init__(self, value):
-        Exception.__init__(self, "Expected types: <class 'list'>, <class 'string'> and <class 'int'>. Given type {} !"
+        Exception.__init__(self, "Expected types: <class 'list'>, <class 'string'> or <class 'int'>. Given type {} !"
                            .format(type(value)))
 
 class NotInError(Exception):
@@ -9,7 +9,7 @@ class NotInError(Exception):
 
 class WrongTypeError(Exception):
     def __init__(self, value, one_type = False):
-        str_types = one_type if one_type else "<class 'int'>, <class 'float'> and <class 'string'>"
+        str_types = one_type if one_type else "<class 'int'>, <class 'float'> or <class 'string'>"
         Exception.__init__(self, "Accepted types: {}. Type of {} is {} !".format(str_types, value, type(value)))
 
 class AxisSizeError(Exception):
@@ -64,9 +64,9 @@ def check_empy(axis0, axis1):
 
 def check_columns(items, prev_keys = []):
     columns = {}
-    for i, (names, _) in enumerate(items):
-        if names not in list(columns.keys()) + prev_keys:
-            columns[names] = i
+    for i, (name, _) in enumerate(items):
+        if name not in list(columns.keys()) + prev_keys:
+            columns[name] = i + len(prev_keys)
         else:
             raise ColumnNameError(name)
     return columns
@@ -93,13 +93,18 @@ def tint_to_type (tint):
     else:
         raise WrongTypeError(tint)
 
-def check_index(axis, index, key = False, types=False):
+def check_index(axis, index, types = False, key1 = False, key2 = False):
     if not isinstance(index, int):
         raise WrongTypeError(index, int)
 
-    if key:
-        if type_to_int(key) != types[index]:
-            raise WrongTypeError(key, types[index])
+    if key1:
+        if type_to_int(key1) != types[index]:
+            raise WrongTypeError(key1, types[index])
+
+    if key2:
+        if type_to_int(key2) != types[index]:
+            raise WrongTypeError(key2, types[index])
+
     if index < 0 or axis < index + 1:
         raise AxisSizeError(axis, index)
 

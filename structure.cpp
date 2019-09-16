@@ -75,11 +75,11 @@ struct serie {
 
     while (mid != lower or key == *lower) {
       if (key == *mid) {
+        vec.push_back(*(indexes.begin() + (mid - cells.begin())));
+
         if (mid != cells.begin())
           for (lower = mid - 1; lower + 1 > cells.begin() and *lower == key; lower--)
             vec.push_back(*(indexes.begin() + (lower - cells.begin())));
-
-        vec.push_back(*(indexes.begin() + (mid - cells.begin())));
 
         if (mid != cells.end() - 1)
           for (upper = mid + 1; cells.end() > upper and *upper == key; upper++)
@@ -89,6 +89,38 @@ struct serie {
       }
 
       if (key < *mid)
+        upper = mid;
+      else
+        lower = mid;
+
+      mid = lower + (upper - lower) / 2;
+    }
+
+    return vec;
+  }
+
+  const vector<int> between (const T &min, const T &max) {
+    vector<int> vec;
+    auto lower = cells.begin();
+    auto upper = cells.end();
+    auto mid   = lower + (upper - lower) / 2;
+
+    while (mid != lower or (min < *mid and *mid <= max)) {
+      if (min <= *mid and *mid < max) {
+        vec.push_back(*(indexes.begin() + (mid - cells.begin())));
+
+        if (mid != cells.begin())
+          for (lower = mid - 1; lower + 1 > cells.begin() and min <= *lower; lower--)
+            vec.push_back(*(indexes.begin() + (lower - cells.begin())));
+
+        if (mid != cells.end() - 1)
+          for (upper = mid + 1; cells.end() > upper and *upper <= max; upper++)
+            vec.push_back(*(indexes.begin() + (upper - cells.begin())));
+
+        return vec;
+      }
+
+      if (max < *mid)
         upper = mid;
       else
         lower = mid;
@@ -174,6 +206,11 @@ struct BF {
   }
 
   template <class T>
+  const vector<int> between (const int &index, const T &min, const T &max) {
+    return get<serie<T> *>(pSeries[index])->between(min, max);
+  }
+
+  template <class T>
   const vector<T> take_serie (const int &index) {
     return get<serie<T> *>(pSeries[index])->cells;
   }
@@ -216,49 +253,3 @@ struct BF {
     axis0 = indexs.size();
   }
 };
-/*
-  int main () {
-  vector<int> fuck;
-  fuck.push_back(0);
-  fuck.push_back(0);
-
-  BF bf;
-  bf.format(2, 2, fuck);
-  bf.initialize();
-
-  bf.fill_column(0, fuck);
-  bf.fill_column(1, fuck);
-
-  vector<int> fuck2;
-  fuck.push_back(0);
-  fuck.push_back(1);
-
-  bf.slice(fuck2);
-  }
-
-*/
-/*
-  const void copy (vector<vector<object> *> &new_pData, vector<pS_object> &new_pSeries) {
-  vector<object> * new_data = new vector<object>;
-  for (int i = 0; i != axis0; i++) {
-  *new_data = *pData[i];
-  pData.push_back(new_data);
-  }
-
-  for (int i = 0; i != axis1; i++) {
-  if (types[i] == 0) {
-  pS_object new_serie = new serie<int>;
-  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
-  new_pSeries.push_back(new_serie);
-  }else if (types[i] == 1) {
-  pS_object new_serie = new serie<int>;
-  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
-  new_pSeries.push_back(new_serie);
-  }else if (types[i] == 2) {
-  pS_object new_serie = new serie<int>;
-  *get<serie<int> *> (new_serie) = *get<serie<int> *>(pSeries[i]);
-  new_pSeries.push_back(new_serie);
-  }
-  }
-  }
-*/

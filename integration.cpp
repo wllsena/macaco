@@ -101,15 +101,28 @@ struct BananaFrame {
   }
 
 
-  py::list const query(const int &index, const py::list &key) {
+  py::list const query(const int &index, const py::object &key) {
     vector<int> vec;
 
     if (bf->types[index] == 0)
-      vec = bf->query<int>(index, list_to_vec<int>(key)[0]);
+      vec = bf->query<int>(index, py::extract<int>(key));
     else if (bf->types[index] == 1)
-      vec = bf->query<float>(index, list_to_vec<float>(key)[0]);
+      vec = bf->query<float>(index, py::extract<float>(key));
     else if (bf->types[index] == 2)
-      vec = bf->query<string>(index, list_to_vec<string>(key)[0]);
+      vec = bf->query<string>(index, py::extract<string>(key));
+
+    return vec_to_list<int>(vec);
+  }
+
+  py::list const between(const int &index, const py::object &min, const py::object &max) {
+    vector<int> vec;
+
+    if (bf->types[index] == 0)
+      vec = bf->between<int>(index, py::extract<int>(min), py::extract<int>(max));
+    else if (bf->types[index] == 1)
+      vec = bf->between<float>(index, py::extract<float>(min), py::extract<float>(max));
+    else if (bf->types[index] == 2)
+      vec = bf->between<string>(index, py::extract<string>(min), py::extract<string>(max));
 
     return vec_to_list<int>(vec);
   }
@@ -145,5 +158,6 @@ BOOST_PYTHON_MODULE(integration) {
     .def("slice", &BananaFrame::slice)
     .def("axis0", &BananaFrame::axis0)
     .def("axis1", &BananaFrame::axis1)
+    .def("between", &BananaFrame::between)
     .def("__copy__", BFcopy);
 };

@@ -4,8 +4,10 @@ class BananaFrame:
     import matplotlib.pyplot as __plt
     import tabulate as __tb
     import copy as __cp
+    import functools as __ft
 
     class __serie:
+        import tabulate as __tb
         def __init__(self, self_bf, index):
             self.__index   = index
             self.__self_bf = self_bf
@@ -13,33 +15,53 @@ class BananaFrame:
         def __eq__(self, key):
             return self.__self_bf.query(self.__index, key)
 
+        def __rshift__(self, key):
+            return self.__self_bf.between(self.__index, key[0], key[1])
+
         @property
-        def display(self):
-            print(__tb.tabulate([[self.__index + "(s):"] + self.__self_bf.take_column(self.__index)], tablefmt="fancy_grid"))
-            print("macaco.BananaFrame.__serie")
-            return ""
+        def name (self):
+            return self.__index
+
+        @property
+        def values (self):
+            return self.__self_bf.take_column(self.__index)
 
         @property
         def size(self):
-            return self.__self_bf.size[1]
+            return self.__self_bf.size[0]
+
+        def display (self, n = 5, l = 10):
+            if n < self.size:
+                values = self.values[:n] + ['...']
+            else:
+                values = self.values
+            values = [str(value)[:l] for value in values]
+
+            print(self.__tb.tabulate([[self.__index + "(s):"] + values], tablefmt="fancy_grid"))
+            print("macaco.BananaFrame.__serie")
+            return ""
 
         def __len__ (self):
             return self.size
 
         def __str__ (self):
-            return self.display
+            return self.display()
 
         def __repl__ (self):
-            return self.display
+            return self.display()
 
         def _repr_html_(self):
-            return self.display
+            return self.display()
+
+    #---
 
     __bf      = None
     __axis0   = 0
     __axis1   = 0
     __columns = {}
     __types   = []
+
+    #---
 
     def __init__ (self, dic):
         items        = list(dic.items())
@@ -65,7 +87,6 @@ class BananaFrame:
         types   = self.__ceh.check_types(items)
         columns = self.__ceh.check_columns(items, list(self.__columns.keys()))
 
-        self.__axis0   += len(items[0][1])
         self.__axis1   += len(items)
         self.__types   += types
         self.__columns.update(columns)
@@ -80,8 +101,12 @@ class BananaFrame:
         return self.__bf.take_column(self.__columns[name])
 
     def query (self, column, key):
-        self.__ceh.check_index(self.__axis1, self.__columns[column], key, self.__types)
-        return self.__bf.query(self.__columns[column], [key])
+        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key)
+        return sorted(self.__bf.query(self.__columns[column], key))
+
+    def between (self, column, key_min, key_max):
+        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key_min, key_max)
+        return sorted(self.__bf.between(self.__columns[column], key_min, key_max))
 
     def row (self, index):
         self.__ceh.check_index(self.__axis0, index)
@@ -109,12 +134,14 @@ class BananaFrame:
         return new_bf
 
     def __getitem__(self, key):
-        if isinstance(key, list):
+        if isinstance(key, int):
+            return self.row(key)
+        elif isinstance(key, list):
             return self.slices(key)
         elif isinstance(key, str):
             return self.column(key)
-        elif isinstance(key, int):
-            return self.row(key)
+        elif isinstance(key, tuple):
+            return self.slices(list(self.__ft.reduce(lambda a, b: set(a) & set(b), key)))
         else:
             raise self.__ceh.UnexpectedTypeError(key)
 
@@ -130,11 +157,17 @@ class BananaFrame:
     def types (self):
         return [self.__ceh.tint_to_type(t) for t in self.__types]
 
-    @property
-    def display (self):
-        table = [None]*self.__axis0
-        for y in range(self.__axis0):
-            table[y] = [y] + self.row(y)
+    def display (self, n = 5, l = 10):
+        if n < self.__axis0:
+            length = n
+            table  = [None]*length + [['...']*(self.__axis1 + 1)]
+        else:
+            length = self.__axis0
+            table  = [None]*length
+
+        for y in range(length):
+            table[y] = [y] + [str(value)[:l] for value in self.row(y)]
+
         print(self.__tb.tabulate(table, headers=[""] + self.column_names, tablefmt="fancy_grid"))
         print("macaco.BananaFrame")
         return ""
@@ -147,13 +180,13 @@ class BananaFrame:
         return self.size
 
     def __str__ (self):
-        return self.display
+        return self.display()
 
     def __repl__ (self):
-        return self.display
+        return self.display()
 
     def _repr_html_(self):
-        return self.display
+        return self.display()
 
     def plot(self, xlabel, ylabel = False, sort = False, marker='o'):
         if ylabel:
@@ -174,3 +207,20 @@ class BananaFrame:
 
     def r(self):
         return self.__bf
+
+def read_csv(path):
+    import csv
+    reader = list(csv.reader(open(path, mode='r')))
+
+    columns = tuple(reader[0])
+    dic = {column:[] for column in columns}
+
+    for row in reader[1:]:
+        for i, value in enumerate(row):
+            if value.isdigit():
+                value = int(value)
+            elif value.replace('.','').isdigit():
+                value = float(value)
+            dic[columns[i]].append(value)
+
+    return BananaFrame(dic)
