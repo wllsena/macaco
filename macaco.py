@@ -18,30 +18,13 @@ class BananaFrame:
         def __rshift__(self, key):
             return self.__self_bf.between(self.__index, key[0], key[1])
 
-        @property
-        def name (self):
-            return self.__index
+        def __iter__(self):
+            return list.__iter__(self.values)
 
-        @property
-        def values (self):
-            return self.__self_bf.take_column(self.__index)
+        def __contains__(self, key):
+            return key in self.values
 
-        @property
-        def size(self):
-            return self.__self_bf.size[0]
-
-        def display (self, n = 5, l = 10):
-            if n < self.size:
-                values = self.values[:n] + ['...']
-            else:
-                values = self.values
-            values = [str(value)[:l] for value in values]
-
-            print(self.__tb.tabulate([[self.__index + "(s):"] + values], tablefmt="fancy_grid"))
-            print("macaco.BananaFrame.__serie")
-            return ""
-
-        def __len__ (self):
+        def __len__(self):
             return self.size
 
         def __str__ (self):
@@ -52,6 +35,29 @@ class BananaFrame:
 
         def _repr_html_(self):
             return self.display()
+
+        @property
+        def size(self):
+            return self.__self_bf.size[0]
+
+        @property
+        def name (self):
+            return self.__index
+
+        @property
+        def values (self):
+            return self.__self_bf.take_column(self.__index)
+
+        def display (self, n = 5, l = 10):
+            if n < self.size:
+                values = self.values[:n] + ['...']
+            else:
+                values = self.values
+            values = [str(value)[:l] for value in values]
+
+            print(self.__tb.tabulate([[self.__index + "(s):"] + values], tablefmt="fancy_grid"))
+            print(" macaco.BananaFrame.__serie")
+            return ""
 
     #---
 
@@ -80,82 +86,39 @@ class BananaFrame:
         for i in range(self.__axis1):
             self.__bf.fill_column(i, items[i][1])
 
-    def add_columns(self, dic):
-        items = list(dic.items())
+    def __len__ (self):
+        return self.size[1]
 
-        self.__ceh.check_sizes(self.__axis0, items)
-        types   = self.__ceh.check_types(items)
-        columns = self.__ceh.check_columns(items, list(self.__columns.keys()))
+    def __str__ (self):
+        return self.display()
 
-        self.__axis1   += len(items)
-        self.__types   += types
-        self.__columns.update(columns)
+    def __repl__ (self):
+        return self.display()
 
-        for name in columns.keys():
-            setattr(self, name, self.__serie(self, name))
+    def _repr_html_(self):
+        return self.display()
 
-        for i in range(len(types)):
-            self.__bf.add_column(types[i], items[i][1])
+    def __iter__(self):
+        return list.__iter__([self.column(i) for i in self.column_names])
 
-    def take_column (self, name):
-        return self.__bf.take_column(self.__columns[name])
-
-    def query (self, column, key):
-        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key)
-        return sorted(self.__bf.query(self.__columns[column], key))
-
-    def between (self, column, key_min, key_max):
-        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key_min, key_max)
-        return sorted(self.__bf.between(self.__columns[column], key_min, key_max))
-
-    def row (self, index):
-        self.__ceh.check_index(self.__axis0, index)
-        return self.__bf.take_row(index)
-
-    def column (self, index):
-        self.__ceh.check_in(index, self.__columns.keys())
-        return getattr(self, index)
-
-    def copy (self):
-        new_one = self.__class__.__new__(self.__class__)
-        for k, v in self.__dict__.items():
-            setattr(new_one, k, self.__cp.copy(v))
-        return new_one
-
-    def cut (self, keys):
-        self.__ceh.check_types(keys, False)
-        self.__ceh.check_ins(keys, self.indexes)
-        self.__axis0 = len(keys)
-        self.__bf.slice(keys)
-
-    def slices (self, keys):
-        new_bf = self.copy()
-        new_bf.cut(keys)
-        return new_bf
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return self.row(key)
-        elif isinstance(key, list):
-            return self.slices(key)
-        elif isinstance(key, str):
-            return self.column(key)
-        elif isinstance(key, tuple):
-            return self.slices(list(self.__ft.reduce(lambda a, b: set(a) & set(b), key)))
-        else:
-            raise self.__ceh.UnexpectedTypeError(key)
-
-    @property
-    def column_names (self):
-        return list(self.__columns.keys())
+    def __contains__(self, key):
+        return key in self.column_names
 
     @property
     def size (self):
         return [self.__axis0, self.__axis1]
 
     @property
+    def column_names (self):
+        return list(self.__columns.keys())
+
+    @property
     def types (self):
         return [self.__ceh.tint_to_type(t) for t in self.__types]
+
+    @property
+    def indexes(self):
+        return [i for i in range(self.__axis0)]
 
     def display (self, n = 5, l = 10):
         if n < self.__axis0:
@@ -169,24 +132,8 @@ class BananaFrame:
             table[y] = [y] + [str(value)[:l] for value in self.row(y)]
 
         print(self.__tb.tabulate(table, headers=[""] + self.column_names, tablefmt="fancy_grid"))
-        print("macaco.BananaFrame")
+        print(" macaco.BananaFrame")
         return ""
-
-    @property
-    def indexes(self):
-        return [i for i in range(self.__axis0)]
-
-    def __len__ (self):
-        return self.size
-
-    def __str__ (self):
-        return self.display()
-
-    def __repl__ (self):
-        return self.display()
-
-    def _repr_html_(self):
-        return self.display()
 
     def plot(self, xlabel, ylabel = False, sort = False, marker='o'):
         if ylabel:
@@ -205,8 +152,60 @@ class BananaFrame:
         self.__plt.title(xlabel + " X " + ylabel)
         self.__plt.show()
 
-    def r(self):
-        return self.__bf
+    def add_columns(self, dic):
+        items = list(dic.items())
+
+        self.__ceh.check_sizes(self.__axis0, items)
+        types   = self.__ceh.check_types(items)
+        columns = self.__ceh.check_columns(items, list(self.__columns.keys()))
+
+        self.__axis1   += len(items)
+        self.__types   += types
+        self.__columns.update(columns)
+
+        for name in columns.keys():
+            setattr(self, name, self.__serie(self, name))
+
+        for i in range(len(types)):
+            self.__bf.add_column(types[i], items[i][1])
+
+    def column (self, index):
+        self.__ceh.check_in(index, self.__columns.keys())
+        return getattr(self, index)
+
+    def row (self, index):
+        self.__ceh.check_index(self.__axis0, index)
+        return self.__bf.take_row(index)
+
+    def take_column (self, name):
+        return self.__bf.take_column(self.__columns[name])
+
+    def query (self, column, key):
+        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key)
+        return sorted(self.__bf.query(self.__columns[column], key))
+
+    def between (self, column, key_min, key_max):
+        self.__ceh.check_index(self.__axis1, self.__columns[column], self.__types, key_min, key_max)
+        return sorted(self.__bf.between(self.__columns[column], key_min, key_max))
+
+    def copy (self):
+        new_one = self.__class__.__new__(self.__class__)
+        for k, v in self.__dict__.items():
+            setattr(new_one, k, self.__cp.copy(v))
+        return new_one
+
+    def cut (self, keys):
+        self.__ceh.check_types(keys, False)
+        self.__ceh.check_ins(keys, self.indexes)
+        self.__axis0 = len(keys)
+        self.__bf.slice(keys)
+
+    def slices (self, keys):
+        new_bf = self.copy()
+        new_bf.cut(keys)
+        return new_bf
+
+#----
 
 def read_csv(path):
     import csv
