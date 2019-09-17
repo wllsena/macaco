@@ -79,8 +79,7 @@ Obs: Foi cogitado utilizar Red Black Tree para indexar as colunas, mas a complex
 #### - Vizualizar os dados:
 
 ```python
-# def display (self, n = 5, l = 10) 
-# -> no máximo n colunas e l caracteres por célula
+# bf.display (n = 5, l = 10) -> no máximo n colunas e l caracteres por célula
 bf.display(3, 6) 
 ```
 
@@ -100,7 +99,7 @@ bf.display(3, 6)
 ```
 
 ```python
-# def plot(self, xlabel, ylabel = False, sort = False, marker='o')
+# bf.plot(xlabel, ylabel = False, sort = False, marker='o')
 # -> se ylabel = False, utiliza os indexes no eixo y
 # -> especificar qual eixo ordenar (0 ou 1) em 'sort
 bf.plot('Country', 'Latitude', sort=1, marker='o')
@@ -379,7 +378,7 @@ bf.row(1) # linha de index 0
 ```Python
 # Equivalente a bf[[1,2,3]]
 bf2 = bf.slices([1,2,3])
-bf2.display()
+bf2
 ```
 
 ```
@@ -397,8 +396,8 @@ bf2.display()
 
 ```
 # Equivalente a bf = bf.slices([0,1,3,4]), o objeto é alterado
-bf.slices([0,1,3,4])
-bf.display()
+bf.cut([0,1,3,4])
+bf
 ```
 
 ```
@@ -416,18 +415,193 @@ bf.display()
  macaco.BananaFrame
 ```
 
+### - Buscas
+
+Complexidades: O(logn) (busca binária no vetor ordenado)
+
+```Python
+# Dado o nome de uma coluna e uma key (do tipo dos dados da coluna), 
+# é retornado uma lista com os índices de todas as linhas em que
+# o valor naquela coluna é igual a key.
+bf.query('Latitude', -15.78)
+```
+
+```
+[1]
+```
+
+```Python
+# Dado o nome de uma coluna, um min e um max (estes do tipo dos dados da coluna), 
+# é retornado uma  lista com os índices de todas as linhas em que
+# o valor naquela coluna é igual ou está entre o min e o max dados
+bf.between('Longitude', -74.08, -58.66)
+```
+
+```
+[0, 2, 3]
+```
+
+## Series
+
+Serie é uma classe interna do BananaFrame, tal possui seus próprios atributos, métodos e operadores.
+
+```
+# Objeto da classe serie
+serie = bf.Latitude
+print(serie)
+```
+
+```
+╒══════════════╤════════╤════════╤═════╤═══════╕
+│ Latitude(s): │ -34.58 │ -15.78 │ 4.6 │ 10.48 │
+╘══════════════╧════════╧════════╧═════╧═══════╛
+ macaco.BananaFrame.__serie
+```
+
+### - Atributos e métodos públicos:
+
+```Python
+# Retorna o nome da serie
+serie.name
+```
+
+```
+'Latitude'
+```
+
+```Python
+# Tamanho
+serie.size
+```
+
+```
+4
+```
+
+```Python
+# Lista com o valores da serie
+serie.values
+```
+
+```
+[-34.58, -15.78, 4.6, 10.48]
+```
 
 
+```python
+# serie.display (n = 5, l = 10) -> no máximo n colunas e l caracteres por célula
+bf.display(3, 6) 
+```
 
 
+```
+╒══════════════╤════════╤════════╤═════╤═════╕
+│ Latitude(s): │ -34.58 │ -15.78 │ 4.6 │ ... │
+╘══════════════╧════════╧════════╧═════╧═════╛
+ macaco.BananaFrame.__serie
+```
+
+### - Operadores:
+
+```Python
+# Equivalente a serie.size
+len(serie)
+```
+
+```
+4
+```
+
+```Python
+# Equivalente a serie.display()
+serie # ou print(serie)
+```
+
+```
+╒══════════════╤════════╤════════╤═════╤═══════╕
+│ Latitude(s): │ -34.58 │ -15.78 │ 4.6 │ 10.48 │
+╘══════════════╧════════╧════════╧═════╧═══════╛
+ macaco.BananaFrame.__serie
+```
+
+```Python
+# Retorna se o valor faz parte da serie
+4.6 in serie
+```
+
+```
+True
+```
 
 
+```Python
+# Iterar sobre a serie retorna os valores
+for value in serie:
+    print(value)
+```
 
+```
+-34.58
+-15.78
+4.6
+10.48
+```
 
+```Python
+# Equivalente a bf.query(serie.name, key), key = 4.6
+serie == 4.6
+```
 
+```
+[2]
+```
 
+```Python
+# Equivalente a bf.between('Longitude', min, max), min, max = (-15.78, 4.6)
+serie >> (-15.78, 4.6)
+```
 
+```
+[1, 2]
+```
 
+## Conclusão
 
+Misturando os operadores de um BananaFrame e de suas series é possível:
 
+```
+# Uma ou mais query de forma elegante
+bf[bf.Latitude == -33.45, 
+   bf.Longitude == -70.66,
+   bf.Country == 'Chile']
+```
 
+```
+╒════╤══════════╤═══════════╤════════════╤═════════════╕
+│    │ City     │ Country   │   Latitude │   Longitude │
+╞════╪══════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Santiago │ Chile     │     -33.45 │      -70.66 │
+╘════╧══════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+
+```
+
+```
+# Busca geometrica
+bf[bf.Latitude >> (-15.78, 10.0), 
+   bf.Longitude >> (-80.0, 0.0)]
+```
+
+```
+╒════╤══════════╤═══════════╤════════════╤═════════════╕
+│    │ City     │ Country   │   Latitude │   Longitude │
+╞════╪══════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Brasilia │ Brazil    │     -15.78 │      -47.91 │
+├────┼──────────┼───────────┼────────────┼─────────────┤
+│  1 │ Bogota   │ Colombia  │       4.6  │      -74.08 │
+╘════╧══════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+
+```
+
+### Feito por William Sena como trabalho do curso Estrutura de Dados e Algoritmos do Mestrado EMAp com o professor Jorge Poco
