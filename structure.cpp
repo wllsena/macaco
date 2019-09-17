@@ -105,8 +105,8 @@ struct serie {
     auto upper = cells.end();
     auto mid   = lower + (upper - lower) / 2;
 
-    while (mid != lower or (min < *mid and *mid <= max)) {
-      if (min <= *mid and *mid < max) {
+    while (mid != lower or (min <= *mid and *mid <= max)) {
+      if (min <= *mid and *mid <= max) {
         vec.push_back(*(indexes.begin() + (mid - cells.begin())));
 
         if (mid != cells.begin())
