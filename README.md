@@ -1,10 +1,35 @@
 # Macaco
-```python
-import macaco as mc
+
+### Dependências
+
+Arquivos deste repositório: ```structure.cpp```, ```integration.cpp```, ```checks_and_error_handling.py``` e ```macaco.py```.
+
+Modulos de C++(17): ```boost/python.hpp```, ```iostream```, ```vector``` e ```variant``` e ```stdlib.h```.
+
+### Compile
+
+g++ -fpic -c -o integration.o integration.cpp -std=c++17 -I/path/to/python/include -I/path/to/boost/include -L/path/to/python/lib -L/path/to/boost/lib
+
+```
+Example
+
+-I/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7/Headers
+
+-I/usr/local/Cellar/boost/1.71.0/include/ 
+
+-L/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7/lib/
+
+-L/usr/local/Cellar/boost/1.71.0/lib/ 
 ```
 
+g++ -o integration.so -shared integration.o -lboost_python37 -lpython3.7 -std=c++17
+
+
 ### Instanciando um objeto da classe BananaFrame
+
 ```python
+import macaco as mc
+
 bf = mc.BananaFrame({
     'City': ['Buenos Aires', 'Brasilia', 'Santiago', 'Bogota', 'Caracas'],
     'Country': ['Argentina', 'Brazil', 'Chile', 'Colombia', 'Venezuela'],
