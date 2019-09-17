@@ -103,6 +103,18 @@ class BananaFrame:
 
     def __contains__(self, key):
         return key in self.column_names
+    
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self.row(key)
+        elif isinstance(key, list):
+            return self.slices(key)
+        elif isinstance(key, str):
+            return self.column(key)
+        elif isinstance(key, tuple):
+            return self.slices(list(self.__ft.reduce(lambda a, b: set(a) & set(b), key)))
+        else:
+            raise self.__ceh.UnexpectedTypeError(key)
 
     @property
     def size (self):
