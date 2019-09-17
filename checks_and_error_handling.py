@@ -5,7 +5,7 @@ class UnexpectedTypeError(Exception):
 
 class NotInError(Exception):
     def __init__(self, value, context):
-        Exception.__init__(self, "{} not in {} !".format(value, context))
+        Exception.__init__(self, "{} not in {} !".format(value, context[:10]))
 
 class WrongTypeError(Exception):
     def __init__(self, value, one_type = False):
