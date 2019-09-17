@@ -11,7 +11,7 @@ Modulos de C++(17): ```boost/python.hpp```, ```iostream```, ```vector``` e ```va
 g++ -fpic -c -o integration.o integration.cpp -std=c++17 -I/path/to/python/include -I/path/to/boost/include -L/path/to/python/lib -L/path/to/boost/lib
 
 ```
-Example
+Exemplo:
 
 -I/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7/Headers
 
@@ -44,6 +44,8 @@ bf = mc.BananaFrame({
 No alto nível (Python) é feito a checagem da consistência do dicionário (consistência de tipos, keys e tamanho de values.
 Caso haja inconsistência, o devido erro é acionado.
 
+Obs: Tipos aceitos: string, float e int. Cada coluna só pode haver um tipo de dado
+
 Variáveis privadas são criadas como o formato que o BananaFrame terá, os tipos, e um dicionários para traduzir o nome das colunas para o número da sua posição (essa informação é passada para o baixo nível para poder retornar uma determinada coluna).
 
 Métodos são criados com os nomes das colunas para que possa utilizar como: 
@@ -75,27 +77,6 @@ Obs: Foi cogitado utilizar Red Black Tree para indexar as colunas, mas a complex
 ### Métodos e atributos de um BananaFrame
 
 #### - Vizualizar os dados:
-
-```python
-bf  # ou print(bf)
-```
-
-```
-╒════╤════════════╤═══════════╤════════════╤═════════════╕
-│    │ City       │ Country   │   Latitude │   Longitude │
-╞════╪════════════╪═══════════╪════════════╪═════════════╡
-│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │
-├────┼────────────┼───────────┼────────────┼─────────────┤
-│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │
-├────┼────────────┼───────────┼────────────┼─────────────┤
-│  2 │ Santiago   │ Chile     │     -33.45 │      -70.66 │
-├────┼────────────┼───────────┼────────────┼─────────────┤
-│  3 │ Bogota     │ Colombia  │       4.6  │      -74.08 │
-├────┼────────────┼───────────┼────────────┼─────────────┤
-│  4 │ Caracas    │ Venezuela │      10.48 │      -66.86 │
-╘════╧════════════╧═══════════╧════════════╧═════════════╛
- macaco.BananaFrame
-```
 
 ```python
 # def display (self, n = 5, l = 10) 
@@ -131,9 +112,9 @@ bf.plot('Longitude', sort=0, marker='-')
 ![GitHub Logo](/images/image2)
 
 #### - Atributos públicos:
+
 ```Python
-# Retorna formato do BananaFrame -> [axis0, axis1]
-# len(bf) retorna só o axis1 (quantidade de colunas)
+# Retorna formato do BananaFrame -> [axis0, axis1] (linhas, colunas)
 bf.size 
 ```
 ```
@@ -167,14 +148,273 @@ bf.types
 [str, str, float, float]
 ```
 
+```Python 
+# bf.'nome_da_coluna' -> Retorna a coluna como uma serie (logo as series serão explicadas) 
+serie = bf.City # Equivalente a bf['City']
+print(serie)
+```
+
+```
+╒══════════╤════════════╤══════════╤══════════╤════════╤═════════╕
+│ City(s): │ Buenos Air │ Brasilia │ Santiago │ Bogota │ Caracas │
+╘══════════╧════════════╧══════════╧══════════╧════════╧═════════╛
+ macaco.BananaFrame.__serie
+```
+
+```Python
+# Retorna uma cópia identica do BananaFrame
+# Alterações na cópia ou no original não afetará o outro objeto 
+bf2 = bf.copy
+bf2.display()
+```
+
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │
+╞════╪════════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  2 │ Santiago   │ Chile     │     -33.45 │      -70.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  3 │ Bogota     │ Colombia  │       4.6  │      -74.08 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  4 │ Caracas    │ Venezuela │      10.48 │      -66.86 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+ 
+```
 
 
+#### - Operadores:
+
+```Python
+# Retorna uma lista com os valores de uma determinada linha
+# key do tipo int
+bf[0] # linha de index 0
+```
+
+```
+['Buenos Aires', 'Argentina', -34.58000183105469, -58.65999984741211, 44]
+```
+
+```python
+# Equivalente a bf.Latitude
+# key do tipo string
+bf['Latitude']
+```
+
+```
+╒══════════════╤════════╤════════╤════════╤═════╤═══════╕
+│ Latitude(s): │ -34.58 │ -15.78 │ -33.45 │ 4.6 │ 10.48 │
+╘══════════════╧════════╧════════╧════════╧═════╧═══════╛
+ macaco.BananaFrame.__serie
+```
+
+```Python
+# Retorna uma cópia do BananaFrame somentre com determindas linhas
+# key do tipo lista de int
+bf2 = bf[[0, 1, 4]]
+bf2.display()
+```
+
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │
+╞════╪════════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  2 │ Caracas    │ Venezuela │      10.48 │      -66.86 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+```
+
+```Python
+# Equivalente a bf[[0, 2]], mas é retornado a intercessão das listas
+# key do tipo list de lists de int
+bf2 = bf[[0, 2, 4], [0, 1, 2], [0, 2, 3, 4]]
+bf2.display()
+```
+
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │
+╞════╪════════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  1 │ Santiago   │ Chile     │     -33.45 │      -70.66 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+```
+
+```Python
+# Retorna a quantidade de colunas (axis1)
+len(bf)
+```
+
+```
+4
+```
+
+```python
+# quivalente a bf.display(5, 10)
+bf  # ou print(bf)
+```
+
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │
+╞════╪════════════╪═══════════╪════════════╪═════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  2 │ Santiago   │ Chile     │     -33.45 │      -70.66 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  3 │ Bogota     │ Colombia  │       4.6  │      -74.08 │
+├────┼────────────┼───────────┼────────────┼─────────────┤
+│  4 │ Caracas    │ Venezuela │      10.48 │      -66.86 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╛
+ macaco.BananaFrame
+```
+
+```Python
+# Iterar sobre um bf retorna as series (colunas)
+for serie in bf:
+    print(serie)
+```
+
+```
+╒══════════╤════════════╤══════════╤══════════╤════════╤═════════╕
+│ City(s): │ Buenos Air │ Brasilia │ Santiago │ Bogota │ Caracas │
+╘══════════╧════════════╧══════════╧══════════╧════════╧═════════╛
+ macaco.BananaFrame.__serie
+
+╒═════════════╤═══════════╤════════╤═══════╤══════════╤═══════════╕
+│ Country(s): │ Argentina │ Brazil │ Chile │ Colombia │ Venezuela │
+╘═════════════╧═══════════╧════════╧═══════╧══════════╧═══════════╛
+ macaco.BananaFrame.__serie
+
+╒══════════════╤════════╤════════╤════════╤═════╤═══════╕
+│ Latitude(s): │ -34.58 │ -15.78 │ -33.45 │ 4.6 │ 10.48 │
+╘══════════════╧════════╧════════╧════════╧═════╧═══════╛
+ macaco.BananaFrame.__serie
+
+╒═══════════════╤════════╤════════╤════════╤════════╤════════╕
+│ Longitude(s): │ -58.66 │ -47.91 │ -70.66 │ -74.08 │ -66.86 │
+╘═══════════════╧════════╧════════╧════════╧════════╧════════╛
+ macaco.BananaFrame.__serie
+```
+ 
+```Python
+# Checa se alguma coluna possui o nome dado
+'City' in bf
+```
+ 
+```
+True
+```
+ 
+#### - Métodos públicos:
+
+```Python
+# Adicionar colunas a patir de um dicionário
+dic = {'PopulationSize':[44, 209, 18, 49, 32]}
+bf.add_columns(dic)
+bf
+``` 
+
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╤══════════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │   PopulationSize │
+╞════╪════════════╪═══════════╪════════════╪═════════════╪══════════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │               44 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │              209 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  2 │ Santiago   │ Chile     │     -33.45 │      -70.66 │               18 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  3 │ Bogota     │ Colombia  │       4.6  │      -74.08 │               49 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  4 │ Caracas    │ Venezuela │      10.48 │      -66.86 │               32 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╧══════════════════╛
+ macaco.BananaFrame
+```
+
+```Python
+# Retorna a coluna como uma lista (não serie)
+bf.take_column('Country')
+```
+
+```
+['Argentina', 'Brazil', 'Chile', 'Colombia', 'Venezuela']
+```
+
+```Python
+# Equivalente a bf['PopulationSize']
+serie = bf.column('PopulationSize')
+print(serie)
+```
+
+```
+╒════════════════════╤════╤═════╤════╤════╤════╕
+│ PopulationSize(s): │ 44 │ 209 │ 18 │ 49 │ 32 │
+╘════════════════════╧════╧═════╧════╧════╧════╛
+ macaco.BananaFrame.__serie
+``` 
+
+```Python
+# Equivalente a bf[1]
+bf.row(1) # linha de index 0
+```
+
+```
+['Brasilia', 'Brazil', -15.779999732971191, -47.90999984741211, 209]
+```
 
 
+```Python
+# Equivalente a bf[[1,2,3]]
+bf2 = bf.slices([1,2,3])
+bf2.display()
+```
 
+```
+╒════╤══════════╤═══════════╤════════════╤═════════════╤══════════════════╕
+│    │ City     │ Country   │   Latitude │   Longitude │   PopulationSize │
+╞════╪══════════╪═══════════╪════════════╪═════════════╪══════════════════╡
+│  0 │ Brasilia │ Brazil    │     -15.78 │      -47.91 │              209 │
+├────┼──────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  1 │ Santiago │ Chile     │     -33.45 │      -70.66 │               18 │
+├────┼──────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  2 │ Bogota   │ Colombia  │       4.6  │      -74.08 │               49 │
+╘════╧══════════╧═══════════╧════════════╧═════════════╧══════════════════╛
+ macaco.BananaFrame
+ ```
 
+```
+# Equivalente a bf = bf.slices([0,1,3,4]), o objeto é alterado
+bf.slices([0,1,3,4])
+bf.display()
+```
 
-
+```
+╒════╤════════════╤═══════════╤════════════╤═════════════╤══════════════════╕
+│    │ City       │ Country   │   Latitude │   Longitude │   PopulationSize │
+╞════╪════════════╪═══════════╪════════════╪═════════════╪══════════════════╡
+│  0 │ Buenos Air │ Argentina │     -34.58 │      -58.66 │               44 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  1 │ Brasilia   │ Brazil    │     -15.78 │      -47.91 │              209 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  2 │ Bogota     │ Colombia  │       4.6  │      -74.08 │               49 │
+├────┼────────────┼───────────┼────────────┼─────────────┼──────────────────┤
+│  3 │ Caracas    │ Venezuela │      10.48 │      -66.86 │               32 │
+╘════╧════════════╧═══════════╧════════════╧═════════════╧══════════════════╛
+ macaco.BananaFrame
+```
 
 
 
