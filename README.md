@@ -4,7 +4,9 @@
 
 Arquivos deste repositório: ```structure.cpp```, ```integration.cpp```, ```checks_and_error_handling.py``` e ```macaco.py```.
 
-Modulos de C++(17): ```boost/python.hpp```, ```iostream```, ```vector``` e ```variant``` e ```stdlib.h```.
+Módulos de C++(17): ```boost/python.hpp```, ```iostream```, ```vector``` e ```variant``` e ```stdlib.h```.
+
+Módulos de Python(3): ```matplotlib```, ```tabulate```, ```copy``` e ```functools```.
 
 ### Compile
 
