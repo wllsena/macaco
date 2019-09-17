@@ -604,4 +604,4 @@ bf[bf.Latitude >> (-15.78, 10.0),
 
 ```
 
-### Feito por William Sena como trabalho do curso Estrutura de Dados e Algoritmos do Mestrado EMAp com o professor Jorge Poco
+### Feito por William Sena como trabalho do curso Estrutura de Dados e Algoritmos do Mestrado EMAp/FGV com o professor Jorge Poco
