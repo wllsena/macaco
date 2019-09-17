@@ -30,6 +30,10 @@ g++ -o integration.so -shared integration.o -lboost_python37 -lpython3.7 -std=c+
 ```python
 import macaco as mc
 
+# A partir de um arquivo csv
+bf = mc.read_csv('iris.csv')
+
+# A partir de um dicionário
 bf = mc.BananaFrame({
     'City': ['Buenos Aires', 'Brasilia', 'Santiago', 'Bogota', 'Caracas'],
     'Country': ['Argentina', 'Brazil', 'Chile', 'Colombia', 'Venezuela'],
