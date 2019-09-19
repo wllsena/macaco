@@ -574,7 +574,7 @@ Misturando os operadores de um BananaFrame e de suas series é possível:
 ```
 # Uma ou mais query de forma elegante
 bf[bf.Latitude == -33.45, 
-   bf.Longitude == -70.66,
+   bf.Longitude >> (-71.0, 0.0),
    bf.Country == 'Chile']
 ```
 
